@@ -31,7 +31,8 @@ public class FileService {
         return fileMapper.insert(file);
     }
 
-    public boolean existFile(Integer id) {
-        return fileMapper.getFileById(id) != null;
+    public boolean existFile(String fileName) {
+        return fileMapper.findByName(fileName) != null;
     }
+
 }

@@ -274,6 +274,7 @@ class CloudStorageApplicationTests {
 		getHomePage();
 		homePage.openNoteTab();
 		homePage.deleteNote();
+		driver.switchTo().alert().accept();
 		Assertions.assertTrue(homePage.noNoteExist());
 	}
 

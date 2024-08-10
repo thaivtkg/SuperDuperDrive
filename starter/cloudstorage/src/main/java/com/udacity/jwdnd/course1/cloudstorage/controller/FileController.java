@@ -13,6 +13,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -30,7 +31,7 @@ public class FileController {
     }
 
     @PostMapping("upload")
-    public String upload(@RequestParam("fileUpload") MultipartFile multipartFile, Model model, Authentication authentication) throws IOException {
+    public String upload(@RequestParam("fileUpload") MultipartFile multipartFile,RedirectAttributes redirAttrs, Model model, Authentication authentication) throws IOException {
         Integer userId = userService.getUser(authentication.getName()).getUserId();
         File file = new File();
         file.setFileName(multipartFile.getOriginalFilename());
@@ -38,13 +39,17 @@ public class FileController {
         file.setFileSize(String.format("%d KB", multipartFile.getSize()));
         file.setContentType(multipartFile.getContentType());
         file.setFileData(multipartFile.getInputStream().readAllBytes());
-        if(multipartFile.isEmpty()){
-            model.addAttribute("errorMessage", "File is empty");
-        } else {
-            fileService.storeFile(file);
-            model.addAttribute("successMessage", "Saved file successfully");
+        if (fileService.existFile(file.getFileName())){
+            redirAttrs.addFlashAttribute("errorMessage", "File already exists");
         }
-        return "result";
+        else if(multipartFile.getSize()==0){
+            redirAttrs.addFlashAttribute("errorMessage", "File is empty");
+        }else {
+            fileService.storeFile(file);
+            redirAttrs.addFlashAttribute("successMessage", "Saved file successfully");
+        }
+
+        return "redirect:/home";
     }
 
     @ResponseBody
@@ -68,8 +73,9 @@ public class FileController {
     }
 
     @GetMapping("/delete/{id}")
-    public String delete(@PathVariable Integer id) {
+    public String delete(@PathVariable Integer id,RedirectAttributes redirAttrs) {
         fileService.deleteFile(id);
+        redirAttrs.addFlashAttribute("successMessage", "File deleted successfully");
         return "redirect:/home";
     }
 }

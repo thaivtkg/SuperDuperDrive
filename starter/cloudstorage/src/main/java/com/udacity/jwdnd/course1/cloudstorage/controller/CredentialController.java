@@ -10,6 +10,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 
 @Controller
@@ -29,23 +30,27 @@ public class CredentialController {
     }
 
     @PostMapping("add")
-    public String getCredentialPage(Model model, @ModelAttribute("noteForm") NoteForm noteForm,
-                                    Authentication authentication, @ModelAttribute("credentialForm") CredentialForm credentialForm) {
+    public String addCredential(Model model, @ModelAttribute("noteForm") NoteForm noteForm,
+                                    Authentication authentication, @ModelAttribute("credentialForm") CredentialForm credentialForm,
+                                RedirectAttributes redirectAttributes) {
         Integer userId = userService.getUser(authentication.getName()).getUserId();
         if(credentialForm.getCredentialId()== null){
             credentialService.addCredential(credentialForm,userId);
+            redirectAttributes.addFlashAttribute("successMessage", "Credential add successfully");
         }else {
             String newPassword = encryptionService.encryptValue(credentialForm.getPassword(), credentialForm.getKey());
             credentialService.updateCredential(credentialForm.getCredentialId(),credentialForm.getUsername(),credentialForm.getUrl(),credentialForm.getKey(),newPassword);
+            redirectAttributes.addFlashAttribute("successMessage", "Update credential successfully");
         }
-        model.addAttribute("successMessage", "Credential add successfully");
-        return "result";
+
+        return "redirect:/home";
     }
 
     @RequestMapping("delete/{credentialId}")
-    public String deleteCredential(Model model, @PathVariable("credentialId") Integer credentialId,Authentication authentication) {
+    public String deleteCredential(Model model, @PathVariable("credentialId") Integer credentialId,Authentication authentication,RedirectAttributes redirectAttributes) {
         credentialService.deleteCredential(credentialId);
         Integer userId = userService.getUser(authentication.getName()).getUserId();
+        redirectAttributes.addFlashAttribute("successMessage", "Delete credential successfully");
         model.addAttribute("encryptionService", encryptionService);
         model.addAttribute("credentials",credentialService.getAllCredentialsByUserId(userId));
         model.addAttribute("notes",noteService.getNoteByUserId(userId));
